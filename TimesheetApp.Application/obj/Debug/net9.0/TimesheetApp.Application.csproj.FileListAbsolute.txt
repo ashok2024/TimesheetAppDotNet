@@ -1,0 +1,15 @@
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\bin\Debug\net9.0\TimesheetApp.Application.deps.json
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\bin\Debug\net9.0\TimesheetApp.Application.dll
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\bin\Debug\net9.0\TimesheetApp.Application.pdb
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\bin\Debug\net9.0\TimesheetApp.Domain.dll
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\bin\Debug\net9.0\TimesheetApp.Domain.pdb
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\TimesheetApp.Application.csproj.AssemblyReference.cache
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\TimesheetApp.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\TimesheetApp.Application.AssemblyInfoInputs.cache
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\TimesheetApp.Application.AssemblyInfo.cs
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\TimesheetApp.Application.csproj.CoreCompileInputs.cache
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\Timeshee.3A5D86D8.Up2Date
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\TimesheetApp.Application.dll
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\refint\TimesheetApp.Application.dll
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\TimesheetApp.Application.pdb
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Application\obj\Debug\net9.0\ref\TimesheetApp.Application.dll

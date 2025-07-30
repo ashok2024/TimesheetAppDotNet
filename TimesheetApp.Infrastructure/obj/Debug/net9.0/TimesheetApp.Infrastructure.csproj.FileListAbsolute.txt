@@ -1,0 +1,5 @@
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Infrastructure\obj\Debug\net9.0\TimesheetApp.Infrastructure.csproj.AssemblyReference.cache
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Infrastructure\obj\Debug\net9.0\TimesheetApp.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Infrastructure\obj\Debug\net9.0\TimesheetApp.Infrastructure.AssemblyInfoInputs.cache
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Infrastructure\obj\Debug\net9.0\TimesheetApp.Infrastructure.AssemblyInfo.cs
+D:\freelancer2025\Internal Timesheet & Task Tracker\TimesheetApp\TimesheetApp.Infrastructure\obj\Debug\net9.0\TimesheetApp.Infrastructure.csproj.CoreCompileInputs.cache
