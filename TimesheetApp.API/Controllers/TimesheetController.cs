@@ -21,7 +21,7 @@ public class TimesheetController : ControllerBase
     public async Task<IActionResult> Create([FromForm] CreateTimesheetTaskRequest request, IFormFile? attachment)
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-        if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
         await _timesheetService.AddTaskAsync(request, attachment, userId);
         return Ok("Task created.");
@@ -31,7 +31,7 @@ public class TimesheetController : ControllerBase
     public async Task<IActionResult> GetUserTasks()
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-        if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
         var tasks = await _timesheetService.GetTasksByUserAsync(userId);
         return Ok(tasks);
@@ -41,7 +41,7 @@ public class TimesheetController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var userIdStr = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-        if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
 
         var deleted = await _timesheetService.DeleteTaskAsync(id, userId);
         if (!deleted) return NotFound();

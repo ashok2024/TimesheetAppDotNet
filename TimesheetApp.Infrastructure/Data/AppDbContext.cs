@@ -20,7 +20,7 @@ namespace TimesheetApp.Infrastructure.Data
             base.OnModelCreating(modelBuilder);
 
             // Fluent API config if needed
-            modelBuilder.Entity<User>().HasIndex(u => u.).IsUnique();
+            modelBuilder.Entity<User>().HasIndex(u => u.Id).IsUnique();
         }
     }
 }
