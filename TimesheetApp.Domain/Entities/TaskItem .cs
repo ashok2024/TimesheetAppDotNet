@@ -7,14 +7,15 @@ using TimesheetApp.Domain.Common;
 
 namespace TimesheetApp.Domain.Entities
 {
-    public class Timesheet : AuditableEntity
+    public class TaskItem : AuditableEntity
     {
         public int Id { get; set; }
-        public int UserId { get; set; }
         public int ProjectId { get; set; }
-        public int? TaskId { get; set; }
-        public DateTime WorkDate { get; set; }
-        public decimal HoursWorked { get; set; }
+        public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public Guid? AssignedTo { get; set; }
+        public DateTime? DueDate { get; set; }
+        public string? Status { get; set; }
+        public string? FilePath { get; set; }
     }
 }

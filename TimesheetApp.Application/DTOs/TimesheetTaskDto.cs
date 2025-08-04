@@ -8,16 +8,29 @@ namespace TimesheetApp.Application.DTOs
 {
     namespace TimesheetApp.Application.DTOs.TimesheetTask
     {
-        public class TimesheetTaskDto
+        public class TimesheetDto
         {
             public int Id { get; set; }
-            public string ProjectName { get; set; } = string.Empty;
-            public string TaskDescription { get; set; } = string.Empty;
-            public double HoursSpent { get; set; }
-            public DateTime TaskDate { get; set; }
-            public string? Notes { get; set; }
-            public string? AttachmentUrl { get; set; }
+            public int UserId { get; set; }
+            public int ProjectId { get; set; }
+            public int? TaskId { get; set; }
+            public DateTime WorkDate { get; set; }
+            public decimal HoursWorked { get; set; }
+            public string? Description { get; set; }
         }
+
+        public class CreateTimesheetDto
+        {
+            public int UserId { get; set; }
+            public int ProjectId { get; set; }
+            public int? TaskId { get; set; }
+            public DateTime WorkDate { get; set; }
+            public decimal HoursWorked { get; set; }
+            public string? Description { get; set; }
+        }
+
+        public class UpdateTimesheetDto : CreateTimesheetDto { }
+
     }
 
 }

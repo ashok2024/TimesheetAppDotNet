@@ -2,11 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using TimesheetApp.Application.DTOs.TimesheetApp.Application.DTOs.TimesheetTask;
 using TimesheetApp.Application.Interfaces;
-using TimesheetApp.Domain.Entities;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class TimesheetController : ControllerBase
 {
     private readonly ITimesheetService _timesheetService;
@@ -16,36 +15,65 @@ public class TimesheetController : ControllerBase
         _timesheetService = timesheetService;
     }
 
-    [HttpPost]
-    [RequestSizeLimit(5 * 1024 * 1024)]
-    public async Task<IActionResult> Create([FromForm] CreateTimesheetTaskRequest request, IFormFile? attachment)
-    {
-        var userIdStr = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
+    [HttpGet]
+    public async Task<IActionResult> GetAll() =>
+        Ok(await _timesheetService.GetAllAsync());
 
-        await _timesheetService.AddTaskAsync(request, attachment, userId);
-        return Ok("Task created.");
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(int id)
+    {
+        var item = await _timesheetService.GetByIdAsync(id);
+        return item is not null ? Ok(item) : NotFound();
     }
 
-    [HttpGet("user")]
-    public async Task<IActionResult> GetUserTasks()
+    // ✅ New filtered GET endpoint
+    [HttpGet("filter")]
+    public async Task<IActionResult> GetByFilter(
+        [FromQuery] int? projectId,
+        [FromQuery] int? taskId,
+        [FromQuery] int? userId)
     {
-        var userIdStr = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
+        var items = await _timesheetService.GetByFilterAsync(projectId, taskId, userId);
+        return Ok(items);
+    }
 
-        var tasks = await _timesheetService.GetTasksByUserAsync(userId);
-        return Ok(tasks);
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateTimesheetDto dto)
+    {
+        var createdBy = User?.Identity?.Name ?? "system";
+        var item = await _timesheetService.CreateAsync(dto, createdBy);
+        return CreatedAtAction(nameof(Get), new { id = item.Id }, item);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, UpdateTimesheetDto dto)
+    {
+        var updatedBy = User?.Identity?.Name ?? "system";
+        return await _timesheetService.UpdateAsync(id, dto, updatedBy)
+            ? NoContent()
+            : NotFound();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var userIdStr = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
-        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
-
-        var deleted = await _timesheetService.DeleteTaskAsync(id, userId);
-        if (!deleted) return NotFound();
-
-        return Ok("Task deleted.");
+        return await _timesheetService.DeleteAsync(id)
+            ? NoContent()
+            : NotFound();
+    }
+    [HttpGet("by-task-user")]
+    public async Task<IActionResult> GetByTaskAndUser([FromQuery] int taskId)
+    {
+        try
+        {
+            var result = await _timesheetService.GetByTaskAndUserAsync(taskId);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            // Optionally log the error
+            return StatusCode(500, $"An error occurred: {ex.Message}");
+        }
     }
 }
+    

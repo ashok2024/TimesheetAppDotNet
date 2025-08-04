@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Dapper;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using TimesheetApp.Application.DTOs;
 using TimesheetApp.Application.Interfaces;
@@ -14,37 +12,42 @@ namespace TimesheetApp.Infrastructure.Repositories
 {
     public class UserService : IUserService
     {
-        private readonly AppDbContext _db;
+        private readonly IDbConnectionFactory _dbFactory;
         private readonly IPasswordHasher<User> _passwordHasher;
 
-        public UserService(AppDbContext db, IPasswordHasher<User> passwordHasher)
+        public UserService(IDbConnectionFactory dbFactory, IPasswordHasher<User> passwordHasher)
         {
-            _db = db;
+            _dbFactory = dbFactory;
             _passwordHasher = passwordHasher;
         }
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
-            return await _db.Users
-                .Select(u => new UserDto
-                {
-                    Id = u.Id,
-                    FullName = u.FullName,
-                    Email = u.Email,
-                    Role = u.Role
-                }).ToListAsync();
+            using var conn = _dbFactory.CreateConnection();
+
+            var sql = @"
+                        SELECT 
+                            Id, 
+                            EmpId,   
+                            UserName, 
+                            Email, 
+                            FullName, 
+                            PhoneNumber, 
+                            Department, 
+                            Role, 
+                            DateOfJoining, 
+                            IsActive
+                        FROM Users 
+                        WHERE IsActive = 1";
+
+            return await conn.QueryAsync<UserDto>(sql);
         }
 
-        public async Task<UserDto?> GetUserByIdAsync(Guid id)
+        public async Task<UserDto?> GetUserByIdAsync(int id)
         {
-            var user = await _db.Users.FindAsync(id);
-            return user == null ? null : new UserDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                Role = user.Role
-            };
+            using var conn = _dbFactory.CreateConnection();
+            var sql = "SELECT * FROM Users WHERE Id = @Id AND IsActive = 1";
+            return await conn.QueryFirstOrDefaultAsync<UserDto>(sql, new { Id = id });
         }
 
         public async Task<UserDto> CreateUserAsync(CreateUserDto dto)
@@ -52,13 +55,27 @@ namespace TimesheetApp.Infrastructure.Repositories
             var user = new User
             {
                 FullName = dto.FullName,
+                EmpId = dto.EmpId,
                 Email = dto.Email,
-                Role = dto.Role
+                PhoneNumber = dto.PhoneNumber,
+                Department = dto.Department,
+                Role = dto.Role,
+                DateOfJoining = dto.DateOfJoining,
+                PasswordHash = _passwordHasher.HashPassword(null!, dto.Password),
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = "System", // Replace with logged-in user later
+                IsActive = true,
+                UserName = dto.Email
             };
-            user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
 
-            _db.Users.Add(user);
-            await _db.SaveChangesAsync();
+            using var conn = _dbFactory.CreateConnection();
+            var sql = @"
+                 INSERT INTO Users 
+                 (FullName, EmpId, Email, UserName, PhoneNumber, Department, Role, DateOfJoining, PasswordHash, CreatedDate, CreatedBy, IsActive)
+                 VALUES 
+                 (@FullName, @EmpId, @Email, @UserName, @PhoneNumber, @Department, @Role, @DateOfJoining, @PasswordHash, @CreatedDate, @CreatedBy, @IsActive)";
+
+            await conn.ExecuteAsync(sql, user);
 
             return new UserDto
             {
@@ -69,26 +86,53 @@ namespace TimesheetApp.Infrastructure.Repositories
             };
         }
 
-        public async Task<bool> UpdateUserAsync(Guid id, UpdateUserDto dto)
-        {
-            var user = await _db.Users.FindAsync(id);
-            if (user == null) return false;
 
-            user.FullName = dto.FullName;
-            user.Role = dto.Role;
-            await _db.SaveChangesAsync();
-            return true;
+        public async Task<bool> UpdateUserAsync(int id, UpdateUserDto dto)
+        {
+            using var conn = _dbFactory.CreateConnection();
+            var sql = @"
+                          UPDATE Users 
+                          SET 
+                              FullName = @FullName, 
+                              Role = @Role,
+                              EmpId = @EmpId,
+                              PhoneNumber = @PhoneNumber,
+                              Department = @Department,
+                              DateOfJoining = @DateOfJoining,
+                              UpdatedDate = @UpdatedDate,
+                              UpdatedBy = @UpdatedBy 
+                          WHERE Id = @Id AND IsActive = 1";
+
+            var affected = await conn.ExecuteAsync(sql, new
+            {
+                Id = id,
+                dto.FullName,
+                dto.Role,
+                dto.EmpId,
+                dto.PhoneNumber,
+                dto.Department,
+                dto.DateOfJoining,
+                UpdatedDate = DateTime.UtcNow,
+                UpdatedBy = "System"
+            });
+
+            return affected > 0;
         }
 
-        public async Task<bool> DeleteUserAsync(Guid id)
-        {
-            var user = await _db.Users.FindAsync(id);
-            if (user == null) return false;
 
-            _db.Users.Remove(user);
-            await _db.SaveChangesAsync();
-            return true;
+        public async Task<bool> DeleteUserAsync(int id)
+        {
+            using var conn = _dbFactory.CreateConnection();
+            var sql = @"UPDATE Users 
+                        SET IsActive = 0, UpdatedDate = @UpdatedDate, UpdatedBy = @UpdatedBy 
+                        WHERE Id = @Id";
+            var affected = await conn.ExecuteAsync(sql, new
+            {
+                Id = id,
+                UpdatedDate = DateTime.UtcNow,
+                UpdatedBy = "System"
+            });
+            return affected > 0;
         }
     }
-
 }

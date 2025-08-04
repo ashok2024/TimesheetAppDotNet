@@ -17,7 +17,7 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet]
+    [HttpGet("GetAllUsers")]
     public async Task<IActionResult> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
@@ -25,13 +25,13 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetUserById(Guid id)
+    public async Task<IActionResult> GetUserById(int id)
     {
         var user = await _userService.GetUserByIdAsync(id);
         return user != null ? Ok(user) : NotFound();
     }
 
-    [HttpPost]
+    [HttpPost("AddUser")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserDto dto)
     {
         var result = await _userService.CreateUserAsync(dto);
@@ -39,14 +39,14 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserDto dto)
+    public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
     {
         var result = await _userService.UpdateUserAsync(id, dto);
         return result ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(Guid id)
+    public async Task<IActionResult> DeleteUser(int id)
     {
         var result = await _userService.DeleteUserAsync(id);
         return result ? NoContent() : NotFound();

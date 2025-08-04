@@ -10,8 +10,13 @@ namespace TimesheetApp.Application.Interfaces
 {
     public interface ITimesheetService
     {
-        Task AddTaskAsync(CreateTimesheetTaskRequest request, IFormFile? attachment, int userId);
-        Task<IEnumerable<TimesheetTaskDto>> GetTasksByUserAsync(int userId);
-        Task<bool> DeleteTaskAsync(int id, int userId);
+        Task<IEnumerable<TimesheetDto>> GetAllAsync();
+        Task<TimesheetDto?> GetByIdAsync(int id);
+        Task<TimesheetDto> CreateAsync(CreateTimesheetDto dto, string createdBy);
+        Task<bool> UpdateAsync(int id, UpdateTimesheetDto dto, string updatedBy);
+        Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<TimesheetDto>> GetByFilterAsync(int? projectId, int? taskId, int? userId);
+        Task<IEnumerable<TimesheetDto>> GetByTaskAndUserAsync(int taskId);
+
     }
 }
