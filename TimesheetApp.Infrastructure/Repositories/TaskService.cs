@@ -56,6 +56,71 @@ public class TaskService : ITaskService
         return taskDict.Values;
     }
 
+    public async Task<PagedResult<TaskItemDto>> GetTasksByProjectIdAsync(int projectId, int page, int pageSize)
+    {
+        using var conn = _dbFactory.CreateConnection();
+
+        var offset = (page - 1) * pageSize;
+
+        var sql = @"
+    -- Main paginated query
+    SELECT 
+        t.Id, t.Name, t.Description, t.DueDate, t.Status, t.ProjectId, t.FilePath,
+        p.Id AS ProjectId, p.Name AS Name, p.Description AS Description, p.StartDate, p.EndDate,
+        u.Id AS Id, u.EmpId, u.UserName, u.Email, u.FullName, u.PhoneNumber, u.Department, u.Role, u.DateOfJoining, u.IsActive,
+        ISNULL(th.TotalHoursSpent, 0) AS TotalHoursSpent
+    FROM Tasks t
+    INNER JOIN Projects p ON t.ProjectId = p.Id
+    LEFT JOIN TaskUserAssignments tua ON tua.TaskId = t.Id
+    LEFT JOIN Users u ON u.Id = tua.UserId
+    LEFT JOIN (
+        SELECT TaskId, SUM(HoursWorked) AS TotalHoursSpent
+        FROM Timesheets
+        GROUP BY TaskId
+    ) th ON th.TaskId = t.Id
+    WHERE t.ProjectId = @ProjectId AND t.IsActive = 1
+    ORDER BY t.Id
+    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+
+    -- Total count query
+    SELECT COUNT(*) 
+    FROM Tasks 
+    WHERE ProjectId = @ProjectId AND IsActive = 1;
+    ";
+
+        var taskMap = new Dictionary<int, TaskItemDto>();
+
+        using var multi = await conn.QueryMultipleAsync(sql, new { ProjectId = projectId, Offset = offset, PageSize = pageSize });
+
+        // Use non-async .Read with type arguments for multi-mapping
+        var taskRows = multi.Read<TaskItemDto, ProjectDto, UserDto, TaskItemDto>(
+            (task, project, user) =>
+            {
+                if (!taskMap.TryGetValue(task.Id, out var existingTask))
+                {
+                    task.Project = project;
+                    task.AssignedUserIds = new List<UserDto>();
+                    taskMap[task.Id] = task;
+                }
+
+                if (user != null && user.Id != 0 && !taskMap[task.Id].AssignedUserIds.Any(u => u.Id == user.Id))
+                {
+                    taskMap[task.Id].AssignedUserIds.Add(user);
+                }
+
+                return taskMap[task.Id];
+            },
+            splitOn: "ProjectId,Id"
+        );
+
+        var totalCount = await multi.ReadSingleAsync<int>();
+
+        return new PagedResult<TaskItemDto>
+        {
+            Data = taskMap.Values.ToList(),
+            Total = totalCount
+        };
+    }
 
 
     public async Task<TaskItemDto?> GetTaskByIdAsync(int id)
@@ -281,55 +346,7 @@ public class TaskService : ITaskService
         var affected = await conn.ExecuteAsync(sql, new { Id = id });
         return affected > 0;
     }
-    public async Task<IEnumerable<TaskItemDto>> GetTasksByProjectIdAsync(int projectId)
-    {
-        using var conn = _dbFactory.CreateConnection();
-
-        var sql = @"
-    SELECT 
-        t.Id, t.Name, t.Description, t.DueDate, t.Status, t.ProjectId,
-        p.Id AS ProjectId, p.Name AS ProjectName, p.Description AS ProjectDescription, p.StartDate, p.EndDate,
-        u.Id, u.EmpId, u.UserName, u.Email, u.FullName, u.PhoneNumber, u.Department, u.Role, u.DateOfJoining, u.IsActive,
-        ISNULL(th.TotalHoursSpent, 0) AS TotalHoursSpent
-    FROM Tasks t
-    INNER JOIN Projects p ON t.ProjectId = p.Id
-    LEFT JOIN TaskUserAssignments tua ON tua.TaskId = t.Id
-    LEFT JOIN Users u ON u.Id = tua.UserId
-    LEFT JOIN (
-        SELECT TaskId, SUM(HoursWorked) AS TotalHoursSpent
-        FROM Timesheets
-        GROUP BY TaskId
-    ) th ON th.TaskId = t.Id
-    WHERE t.ProjectId = @ProjectId AND t.IsActive = 1
-    ";
-
-        var taskMap = new Dictionary<int, TaskItemDto>();
-
-        var result = await conn.QueryAsync<TaskItemDto, ProjectDto, UserDto, TaskItemDto>(
-            sql,
-            (task, project, user) =>
-            {
-                if (!taskMap.TryGetValue(task.Id, out var taskDto))
-                {
-                    task.Project = project;
-                    task.AssignedUserIds = new List<UserDto>();
-                    taskMap[task.Id] = task;
-                }
-
-                if (user != null && user.Id != 0 && !taskMap[task.Id].AssignedUserIds.Any(u => u.Id == user.Id))
-                {
-                    taskMap[task.Id].AssignedUserIds.Add(user);
-                }
-
-                return taskMap[task.Id];
-            },
-            new { ProjectId = projectId },
-            splitOn: "ProjectId,Id"  // Note: User.Id
-        );
-
-        return taskMap.Values;
-    }
-
+    
 
 
 

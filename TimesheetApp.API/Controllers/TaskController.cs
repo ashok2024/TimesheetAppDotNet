@@ -18,6 +18,12 @@ public class TaskController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll() => Ok(await _taskService.GetAllTasksAsync());
 
+    [HttpGet("project/{projectId}/paginated")]
+    public async Task<IActionResult> GetPaginatedTasksByProjectId(int projectId, int page = 1, int pageSize = 10)
+    {
+        var result = await _taskService.GetTasksByProjectIdAsync(projectId, page, pageSize);
+        return Ok(result);
+    }
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)
     {
@@ -51,10 +57,10 @@ public class TaskController : ControllerBase
             ? NoContent()
             : NotFound();
     }
-    [HttpGet("project/{projectId}")]
-    public async Task<IActionResult> GetTasksByProjectId(int projectId)
-    {
-        var tasks = await _taskService.GetTasksByProjectIdAsync(projectId);
-        return Ok(tasks);
-    }
+    //[HttpGet("project/{projectId}")]
+    //public async Task<IActionResult> GetTasksByProjectId(int projectId)
+    //{
+    //    var tasks = await _taskService.GetTasksByProjectIdAsync(projectId);
+    //    return Ok(tasks);
+    //}
 }

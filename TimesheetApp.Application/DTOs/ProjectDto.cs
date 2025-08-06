@@ -33,4 +33,9 @@ namespace TimesheetApp.Application.DTOs
         public DateTime? EndDate { get; set; }
         public List<int>? UserId { get; set; }
     }
+    public class PagedResult<T>
+    {
+        public List<T> Data { get; set; }
+        public int Total { get; set; }
+    }
 }

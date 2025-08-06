@@ -43,6 +43,40 @@ namespace TimesheetApp.Infrastructure.Repositories
             return await conn.QueryAsync<UserDto>(sql);
         }
 
+        public async Task<(IEnumerable<UserDto> Users, int TotalCount)> GetPaginatedUsersAsync(int page, int pageSize)
+        {
+            using var conn = _dbFactory.CreateConnection();
+
+            var offset = (page - 1) * pageSize;
+
+            var sql = @"
+        SELECT 
+            Id, 
+            EmpId,   
+            UserName, 
+            Email, 
+            FullName, 
+            PhoneNumber, 
+            Department, 
+            Role, 
+            DateOfJoining, 
+            IsActive
+        FROM Users
+        WHERE IsActive = 1
+        ORDER BY Id
+        OFFSET @Offset ROWS
+        FETCH NEXT @PageSize ROWS ONLY;
+
+        SELECT COUNT(*) FROM Users WHERE IsActive = 1;
+    ";
+
+            using var multi = await conn.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize });
+            var users = await multi.ReadAsync<UserDto>();
+            var totalCount = await multi.ReadSingleAsync<int>();
+
+            return (users, totalCount);
+        }
+
         public async Task<UserDto?> GetUserByIdAsync(int id)
         {
             using var conn = _dbFactory.CreateConnection();

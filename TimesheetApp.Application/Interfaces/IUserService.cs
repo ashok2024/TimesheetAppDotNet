@@ -14,6 +14,7 @@ namespace TimesheetApp.Application.Interfaces
         Task<UserDto> CreateUserAsync(CreateUserDto dto);
         Task<bool> UpdateUserAsync(int id, UpdateUserDto dto);
         Task<bool> DeleteUserAsync(int id);
+        Task<(IEnumerable<UserDto> Users, int TotalCount)> GetPaginatedUsersAsync(int page, int pageSize);
     }
 
 }

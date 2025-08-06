@@ -23,7 +23,12 @@ public class UserController : ControllerBase
         var users = await _userService.GetAllUsersAsync();
         return Ok(users);
     }
-
+    [HttpGet("paginated")]
+    public async Task<IActionResult> GetPaginatedUsers(int page = 1, int pageSize = 10)
+    {
+        var (users, totalCount) = await _userService.GetPaginatedUsersAsync(page, pageSize);
+        return Ok(new { data = users, total = totalCount });
+    }
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUserById(int id)
     {

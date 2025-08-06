@@ -9,7 +9,7 @@ namespace TimesheetApp.Application.Interfaces
 {
     public interface IProjectService
     {
-        Task<IEnumerable<ProjectDto>> GetAllAsync();
+        Task<PagedResult<ProjectDto>> GetPagedAsync(int page, int pageSize);
         Task<ProjectDto?> GetByIdAsync(int id);
         Task<ProjectDto> CreateAsync(CreateProjectDto dto, string createdBy);
         Task<bool> UpdateAsync(int id, UpdateProjectDto dto, string updatedBy);

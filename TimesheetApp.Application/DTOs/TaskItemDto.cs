@@ -34,5 +34,10 @@ namespace TimesheetApp.Application.DTOs
     }
 
     public class UpdateTaskItemDto : CreateTaskItemDto { }
+    public class PaginatedResult<T>
+    {
+        public IEnumerable<T> Data { get; set; } = [];
+        public int TotalCount { get; set; }
+    }
 
 }

@@ -14,9 +14,12 @@ public class ProjectsController : ControllerBase
         _projectService = projectService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _projectService.GetAllAsync());
-
+    [HttpGet("paginated")]
+    public async Task<IActionResult> GetPaginated([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var result = await _projectService.GetPagedAsync(page, pageSize);
+        return Ok(result);
+    }
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

@@ -13,29 +13,25 @@ public class ProjectService : IProjectService
         _dbFactory = dbFactory;
     }
 
-    public async Task<IEnumerable<ProjectDto>> GetAllAsync()
+    public async Task<PagedResult<ProjectDto>> GetPagedAsync(int page, int pageSize)
     {
         using var conn = _dbFactory.CreateConnection();
 
+        // 1. Get total count
+        var countSql = "SELECT COUNT(*) FROM Projects WHERE IsActive = 1";
+        var totalCount = await conn.ExecuteScalarAsync<int>(countSql);
+
+        // 2. Get paged data with users
         var sql = @"
         SELECT 
-            p.Id,                   
-            p.Name,
-            p.Description,
-            p.StartDate,
-            p.EndDate,
-            p.TotalHourSpent,
-            u.Id,                    
-            u.FullName,
-            u.EmpId,
-            u.Email,
-            u.PhoneNumber,
-            u.Department,
-            u.Role
+            p.Id, p.Name, p.Description, p.StartDate, p.EndDate, p.TotalHourSpent,
+            u.Id, u.FullName, u.EmpId, u.Email, u.PhoneNumber, u.Department, u.Role
         FROM Projects p
         LEFT JOIN ProjectUsers pu ON pu.ProjectId = p.Id
         LEFT JOIN Users u ON u.Id = pu.UserId
-        WHERE p.IsActive = 1";
+        WHERE p.IsActive = 1
+        ORDER BY p.Id
+        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
         var projectMap = new Dictionary<int, ProjectDto>();
 
@@ -58,7 +54,6 @@ public class ProjectService : IProjectService
                     projectMap[proj.Id] = proj;
                 }
 
-                // Validate user before adding
                 if (user != null && user.Id != 0 && !proj.Users.Any(u => u.Id == user.Id))
                 {
                     proj.Users.Add(user);
@@ -66,11 +61,17 @@ public class ProjectService : IProjectService
 
                 return proj;
             },
-            splitOn: "Id" // split happens when second 'Id' (from Users table) appears
+            new { Offset = (page - 1) * pageSize, PageSize = pageSize },
+            splitOn: "Id"
         );
 
-        return projectMap.Values;
+        return new PagedResult<ProjectDto>
+        {
+            Data = projectMap.Values.ToList(),
+            Total = totalCount
+        };
     }
+
 
 
 

@@ -14,7 +14,8 @@ namespace TimesheetApp.Application.Interfaces
         Task<TaskItemDto> CreateTaskAsync(CreateTaskItemDto dto, string createdBy);
         Task<bool> UpdateTaskAsync(int id, UpdateTaskItemDto dto, string updatedBy);
         Task<bool> DeleteTaskAsync(int id);
-        Task<IEnumerable<TaskItemDto>> GetTasksByProjectIdAsync(int projectId);
+        Task<PagedResult<TaskItemDto>> GetTasksByProjectIdAsync(int projectId, int page, int pageSize);
+
     }
 
 }
