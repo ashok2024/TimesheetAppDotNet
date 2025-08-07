@@ -74,6 +74,82 @@ public class ProjectService : IProjectService
 
 
 
+    public async Task<PagedResult<ProjectDto>> GetPagedAsyncFilter(int page, int pageSize, string? name, string? startDate, string? endDate)
+    {
+        using var conn = _dbFactory.CreateConnection();
+
+        var filters = new List<string> { "p.IsActive = 1" };
+
+        if (!string.IsNullOrWhiteSpace(name))
+            filters.Add("p.Name LIKE @Name");
+
+        if (!string.IsNullOrWhiteSpace(startDate))
+            filters.Add("p.StartDate >= @StartDate");
+
+        if (!string.IsNullOrWhiteSpace(endDate))
+            filters.Add("p.EndDate <= @EndDate");
+
+        var whereClause = filters.Count > 0 ? $"WHERE {string.Join(" AND ", filters)}" : "";
+
+        var countSql = $"SELECT COUNT(*) FROM Projects p {whereClause}";
+        var totalCount = await conn.ExecuteScalarAsync<int>(countSql, new { Name = $"%{name}%", StartDate = startDate, EndDate = endDate });
+
+        var sql = $@"
+    SELECT 
+        p.Id, p.Name, p.Description, p.StartDate, p.EndDate, p.TotalHourSpent,
+        u.Id, u.FullName, u.EmpId, u.Email, u.PhoneNumber, u.Department, u.Role
+    FROM Projects p
+    LEFT JOIN ProjectUsers pu ON pu.ProjectId = p.Id
+    LEFT JOIN Users u ON u.Id = pu.UserId
+    {whereClause}
+    ORDER BY p.Id
+    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+        var projectMap = new Dictionary<int, ProjectDto>();
+
+        var result = await conn.QueryAsync<ProjectDto, UserDto, ProjectDto>(
+            sql,
+            (project, user) =>
+            {
+                if (!projectMap.TryGetValue(project.Id, out var proj))
+                {
+                    proj = new ProjectDto
+                    {
+                        Id = project.Id,
+                        Name = project.Name,
+                        Description = project.Description,
+                        StartDate = project.StartDate,
+                        EndDate = project.EndDate,
+                        Users = new List<UserDto>(),
+                        TotalHourSpent = project.TotalHourSpent
+                    };
+                    projectMap[proj.Id] = proj;
+                }
+
+                if (user != null && user.Id != 0 && !proj.Users.Any(u => u.Id == user.Id))
+                {
+                    proj.Users.Add(user);
+                }
+
+                return proj;
+            },
+            new
+            {
+                Offset = (page - 1) * pageSize,
+                PageSize = pageSize,
+                Name = $"%{name}%",
+                StartDate = startDate,
+                EndDate = endDate
+            },
+            splitOn: "Id"
+        );
+
+        return new PagedResult<ProjectDto>
+        {
+            Data = projectMap.Values.ToList(),
+            Total = totalCount
+        };
+    }
 
 
     public async Task<ProjectDto?> GetByIdAsync(int id)

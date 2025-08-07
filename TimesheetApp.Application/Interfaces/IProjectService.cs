@@ -14,6 +14,7 @@ namespace TimesheetApp.Application.Interfaces
         Task<ProjectDto> CreateAsync(CreateProjectDto dto, string createdBy);
         Task<bool> UpdateAsync(int id, UpdateProjectDto dto, string updatedBy);
         Task<bool> DeleteAsync(int id);
+        Task<PagedResult<ProjectDto>> GetPagedAsyncFilter(int page, int pageSize, string? name, string? startDate, string? endDate);
     }
 
 }

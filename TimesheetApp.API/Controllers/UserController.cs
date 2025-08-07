@@ -56,4 +56,10 @@ public class UserController : ControllerBase
         var result = await _userService.DeleteUserAsync(id);
         return result ? NoContent() : NotFound();
     }
+    [HttpPost("filter-paginated")]
+    public async Task<IActionResult> GetFilteredPaginatedUsers([FromBody] UserFilterRequest filter)
+    {
+        var result = await _userService.GetFilteredPaginatedAsync(filter);
+        return Ok(new { data = result.Data, total = result.Total });
+    }
 }

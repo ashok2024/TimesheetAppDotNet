@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TimesheetApp.Application.DTOs;
 using TimesheetApp.Application.Interfaces;
+using TimesheetApp.Infrastructure.Repositories;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
@@ -18,6 +19,16 @@ public class ProjectsController : ControllerBase
     public async Task<IActionResult> GetPaginated([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var result = await _projectService.GetPagedAsync(page, pageSize);
+        return Ok(result);
+    }
+    [HttpGet("filtered-paginated")]
+    public async Task<IActionResult> GetFilteredPaginatedProjects([FromQuery] int page = 1,
+                                                               [FromQuery] int pageSize = 10,
+                                                               [FromQuery] string? name = null,
+                                                               [FromQuery] string? startDate = null,
+                                                               [FromQuery] string? endDate = null)
+    {
+        var result = await _projectService.GetPagedAsyncFilter(page, pageSize, name, startDate, endDate);
         return Ok(result);
     }
     [HttpGet("{id}")]

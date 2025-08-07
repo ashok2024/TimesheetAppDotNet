@@ -168,5 +168,61 @@ namespace TimesheetApp.Infrastructure.Repositories
             });
             return affected > 0;
         }
+
+        public async Task<PagedResult<UserDto>> GetFilteredPaginatedAsync(UserFilterRequest filter)
+        {
+            using var conn = _dbFactory.CreateConnection();
+
+            var conditions = new List<string> { "u.IsActive = 1" };
+            var parameters = new DynamicParameters();
+            parameters.Add("Offset", (filter.Page - 1) * filter.PageSize);
+            parameters.Add("PageSize", filter.PageSize);
+
+            if (filter.ProjectId.HasValue)
+            {
+                conditions.Add("pu.ProjectId = @ProjectId");
+                parameters.Add("ProjectId", filter.ProjectId.Value);
+            }
+
+            if (filter.FromDate.HasValue)
+            {
+                conditions.Add("u.DateOfJoining >= @FromDate");
+                parameters.Add("FromDate", filter.FromDate.Value);
+            }
+
+            if (filter.ToDate.HasValue)
+            {
+                conditions.Add("u.DateOfJoining <= @ToDate");
+                parameters.Add("ToDate", filter.ToDate.Value);
+            }
+
+            var whereClause = string.Join(" AND ", conditions);
+
+            var countSql = $@"
+        SELECT COUNT(DISTINCT u.Id)
+        FROM Users u
+        LEFT JOIN ProjectUsers pu ON pu.UserId = u.Id
+        WHERE {whereClause}";
+
+            var totalCount = await conn.ExecuteScalarAsync<int>(countSql, parameters);
+
+            var sql = $@"
+        SELECT DISTINCT 
+            u.Id, u.FullName, u.EmpId, u.Email, u.PhoneNumber, u.Department, u.Role, u.DateOfJoining, u.IsActive
+        FROM Users u
+        LEFT JOIN ProjectUsers pu ON pu.UserId = u.Id
+        WHERE {whereClause}
+        ORDER BY u.Id
+        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+            var users = await conn.QueryAsync<UserDto>(sql, parameters);
+
+            return new PagedResult<UserDto>
+            {
+                Data = users.ToList(),
+                Total = totalCount
+            };
+        }
+
     }
 }
