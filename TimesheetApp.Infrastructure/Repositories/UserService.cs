@@ -223,6 +223,28 @@ namespace TimesheetApp.Infrastructure.Repositories
                 Total = totalCount
             };
         }
+        public async Task<IEnumerable<UserDto>> GetUsersByProjectIdAsync(int projectId)
+        {
+            using var conn = _dbFactory.CreateConnection();
+
+            var sql = @"
+        SELECT u.Id, 
+               u.EmpId,   
+               u.UserName, 
+               u.Email, 
+               u.FullName, 
+               u.PhoneNumber, 
+               u.Department, 
+               u.Role, 
+               u.DateOfJoining, 
+               u.IsActive
+        FROM Users u
+        INNER JOIN ProjectUsers pu ON u.Id = pu.UserId
+        WHERE pu.ProjectId = @projectId AND u.IsActive = 1";
+
+            return await conn.QueryAsync<UserDto>(sql, new { projectId });
+        }
 
     }
 }
+   

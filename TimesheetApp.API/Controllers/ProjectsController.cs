@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 using TimesheetApp.Application.DTOs;
 using TimesheetApp.Application.Interfaces;
+using TimesheetApp.Domain.Entities;
 using TimesheetApp.Infrastructure.Repositories;
 [Authorize]
 [ApiController]
@@ -59,5 +61,22 @@ public class ProjectsController : ControllerBase
     {
         var success = await _projectService.DeleteAsync(id);
         return success ? NoContent() : NotFound();
+    }
+    [HttpGet("export-csv")]
+    public async Task<IActionResult> ExportProjectsCsv([FromQuery] string? name, [FromQuery] string? startDate, [FromQuery] string? endDate)
+    {
+        var projects = await _projectService.GetFilteredProjectsForExportAsync(name, startDate, endDate);
+
+        var csvBuilder = new StringBuilder();
+        csvBuilder.AppendLine("Project Name,Description,Start Date,End Date,Total Hour Spent,Assigned Users");
+
+        foreach (var project in projects)
+        {
+            var userNames = project.Users != null ? string.Join(" | ", project.Users.Select(u => u.FullName)) : "";
+            csvBuilder.AppendLine($"\"{project.Name}\",\"{project.Description}\",\"{project.StartDate:yyyy-MM-dd}\",\"{project.EndDate:yyyy-MM-dd}\",{project.TotalHourSpent},\"{userNames}\"");
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+        return File(bytes, "text/csv", "projects_export.csv");
     }
 }

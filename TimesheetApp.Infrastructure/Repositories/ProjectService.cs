@@ -210,6 +210,64 @@ public class ProjectService : IProjectService
         return project;
     }
 
+    public async Task<List<ProjectDto>> GetFilteredProjectsForExportAsync(string? name, string? startDate, string? endDate)
+    {
+        using var conn = _dbFactory.CreateConnection();
+
+        var filters = new List<string> { "p.IsActive = 1" };
+        if (!string.IsNullOrWhiteSpace(name))
+            filters.Add("p.Name LIKE @Name");
+        if (!string.IsNullOrWhiteSpace(startDate))
+            filters.Add("p.StartDate >= @StartDate");
+        if (!string.IsNullOrWhiteSpace(endDate))
+            filters.Add("p.EndDate <= @EndDate");
+
+        var whereClause = filters.Count > 0 ? $"WHERE {string.Join(" AND ", filters)}" : "";
+
+        var sql = $@"
+        SELECT 
+            p.Id, p.Name, p.Description, p.StartDate, p.EndDate, p.TotalHourSpent,
+            u.Id, u.FullName, u.EmpId, u.Email, u.PhoneNumber, u.Department, u.Role
+        FROM Projects p
+        LEFT JOIN ProjectUsers pu ON pu.ProjectId = p.Id
+        LEFT JOIN Users u ON u.Id = pu.UserId
+        {whereClause}
+        ORDER BY p.Id";
+
+        var projectMap = new Dictionary<int, ProjectDto>();
+
+        var result = await conn.QueryAsync<ProjectDto, UserDto, ProjectDto>(
+            sql,
+            (project, user) =>
+            {
+                if (!projectMap.TryGetValue(project.Id, out var proj))
+                {
+                    proj = new ProjectDto
+                    {
+                        Id = project.Id,
+                        Name = project.Name,
+                        Description = project.Description,
+                        StartDate = project.StartDate,
+                        EndDate = project.EndDate,
+                        Users = new List<UserDto>(),
+                        TotalHourSpent = project.TotalHourSpent
+                    };
+                    projectMap[proj.Id] = proj;
+                }
+
+                if (user != null && user.Id != 0 && !proj.Users.Any(u => u.Id == user.Id))
+                {
+                    proj.Users.Add(user);
+                }
+
+                return proj;
+            },
+            new { Name = $"%{name}%", StartDate = startDate, EndDate = endDate },
+            splitOn: "Id"
+        );
+
+        return projectMap.Values.ToList();
+    }
 
     public async Task<ProjectDto> CreateAsync(CreateProjectDto dto, string createdBy)
     {

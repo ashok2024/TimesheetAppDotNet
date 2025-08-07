@@ -16,6 +16,7 @@ namespace TimesheetApp.Application.Interfaces
         Task<bool> DeleteUserAsync(int id);
         Task<(IEnumerable<UserDto> Users, int TotalCount)> GetPaginatedUsersAsync(int page, int pageSize);
         Task<PagedResult<UserDto>> GetFilteredPaginatedAsync(UserFilterRequest filter);
+        Task<IEnumerable<UserDto>> GetUsersByProjectIdAsync(int projectId);
     }
 
 }
