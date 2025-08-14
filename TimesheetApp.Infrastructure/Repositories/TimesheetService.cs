@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using System.Text;
+using TimesheetApp.Application.DTOs;
 using TimesheetApp.Application.DTOs.TimesheetApp.Application.DTOs.TimesheetTask;
 using TimesheetApp.Application.Interfaces;
 using TimesheetApp.Domain.Entities;
@@ -207,6 +208,33 @@ public class TimesheetService : ITimesheetService
         WHERE TaskId = @TaskId  AND IsActive = 1";
 
         return await conn.QueryAsync<TimesheetDto>(sql, new { TaskId = taskId });
+    }
+    public async Task<IEnumerable<TimesheetResponse>> GetByUserIdAsync(int userId)
+    {
+        using var conn = _dbFactory.CreateConnection();
+
+        var sql = @"
+        SELECT 
+            t.Id as TimesheetId,
+            t.TaskId ,
+            p.Name AS ProjectName,
+            t.ProjectId,
+            ts.Name AS TaskName,
+            t.UserId,
+            t.HoursWorked as Hours,
+            t.WorkDate as LogDate,
+            t.Description,
+            t.IsActive,
+            t.CreatedDate as LogDate
+        FROM Timesheets t
+        INNER JOIN Projects p ON t.ProjectId = p.Id
+        INNER JOIN Tasks ts ON t.TaskId = ts.Id
+        WHERE t.IsActive = 1
+          AND t.UserId = @UserId
+        ORDER BY t.Id DESC;
+    ";
+
+        return await conn.QueryAsync<TimesheetResponse>(sql, new { UserId = userId });
     }
 
 }

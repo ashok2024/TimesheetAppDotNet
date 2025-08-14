@@ -383,4 +383,54 @@ public class ProjectService : IProjectService
         var result = await conn.ExecuteAsync(sql, new { Id = id });
         return result > 0;
     }
+
+    public async Task<List<ProjectDto>> GetProjectsByUserIdAsync(int userId)
+    {
+        using var conn = _dbFactory.CreateConnection();
+
+        var sql = @"
+        SELECT 
+            p.Id, p.Name, p.Description, p.StartDate, p.EndDate, p.TotalHourSpent,
+            u.Id, u.FullName, u.EmpId, u.Email, u.PhoneNumber, u.Department, u.Role
+        FROM Projects p
+        INNER JOIN ProjectUsers pu ON pu.ProjectId = p.Id
+        LEFT JOIN Users u ON u.Id = pu.UserId
+        WHERE p.IsActive = 1 AND pu.UserId = @UserId
+        ORDER BY p.Name";
+
+        var projectMap = new Dictionary<int, ProjectDto>();
+
+        var result = await conn.QueryAsync<ProjectDto, UserDto, ProjectDto>(
+            sql,
+            (project, user) =>
+            {
+                if (!projectMap.TryGetValue(project.Id, out var proj))
+                {
+                    proj = new ProjectDto
+                    {
+                        Id = project.Id,
+                        Name = project.Name,
+                        Description = project.Description,
+                        StartDate = project.StartDate,
+                        EndDate = project.EndDate,
+                        TotalHourSpent = project.TotalHourSpent,
+                        Users = new List<UserDto>()
+                    };
+                    projectMap[proj.Id] = proj;
+                }
+
+                if (user != null && user.Id != 0 && !proj.Users.Any(u => u.Id == user.Id))
+                {
+                    proj.Users.Add(user);
+                }
+
+                return proj;
+            },
+            new { UserId = userId },
+            splitOn: "Id"
+        );
+
+        return projectMap.Values.ToList();
+    }
+
 }

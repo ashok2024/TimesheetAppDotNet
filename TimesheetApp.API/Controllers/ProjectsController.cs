@@ -79,4 +79,15 @@ public class ProjectsController : ControllerBase
         var bytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
         return File(bytes, "text/csv", "projects_export.csv");
     }
+    [HttpGet("by-user/{userId}")]
+    public async Task<IActionResult> GetProjectsByUserId(int userId)
+    {
+        var projects = await _projectService.GetProjectsByUserIdAsync(userId);
+
+        if (projects == null || projects.Count == 0)
+            return NotFound();
+
+        return Ok(projects);
+    }
+
 }

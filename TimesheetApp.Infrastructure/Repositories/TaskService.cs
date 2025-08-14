@@ -346,7 +346,57 @@ public class TaskService : ITaskService
         var affected = await conn.ExecuteAsync(sql, new { Id = id });
         return affected > 0;
     }
-    
+
+    public async Task<List<TaskItemDto>> GetTasksByProjectIdAsync(int projectId)
+    {
+        using var conn = _dbFactory.CreateConnection();
+
+        var sql = @"
+        SELECT 
+            t.Id, t.Name, t.Description, t.DueDate, t.Status, t.ProjectId, t.FilePath,
+            p.Id AS ProjectId, p.Name AS Name, p.Description AS Description, p.StartDate, p.EndDate,
+            u.Id AS Id, u.EmpId, u.UserName, u.Email, u.FullName, u.PhoneNumber, u.Department, u.Role, u.DateOfJoining, u.IsActive,
+            ISNULL(th.TotalHoursSpent, 0) AS TotalHoursSpent
+        FROM Tasks t
+        INNER JOIN Projects p ON t.ProjectId = p.Id
+        LEFT JOIN TaskUserAssignments tua ON tua.TaskId = t.Id
+        LEFT JOIN Users u ON u.Id = tua.UserId
+        LEFT JOIN (
+            SELECT TaskId, SUM(HoursWorked) AS TotalHoursSpent
+            FROM Timesheets
+            GROUP BY TaskId
+        ) th ON th.TaskId = t.Id
+        WHERE t.ProjectId = @ProjectId AND t.IsActive = 1
+        ORDER BY t.Id;
+    ";
+
+        var taskMap = new Dictionary<int, TaskItemDto>();
+
+        var result = await conn.QueryAsync<TaskItemDto, ProjectDto, UserDto, TaskItemDto>(
+            sql,
+            (task, project, user) =>
+            {
+                if (!taskMap.TryGetValue(task.Id, out var existingTask))
+                {
+                    task.Project = project;
+                    task.AssignedUserIds = new List<UserDto>();
+                    taskMap[task.Id] = task;
+                }
+
+                if (user != null && user.Id != 0 && !taskMap[task.Id].AssignedUserIds.Any(u => u.Id == user.Id))
+                {
+                    taskMap[task.Id].AssignedUserIds.Add(user);
+                }
+
+                return taskMap[task.Id];
+            },
+            new { ProjectId = projectId },
+            splitOn: "ProjectId,Id"
+        );
+
+        return taskMap.Values.ToList();
+    }
+
 
 
 

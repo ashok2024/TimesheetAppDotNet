@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TimesheetApp.Application.DTOs;
 using TimesheetApp.Application.DTOs.TimesheetApp.Application.DTOs.TimesheetTask;
 
 namespace TimesheetApp.Application.Interfaces
@@ -17,6 +18,7 @@ namespace TimesheetApp.Application.Interfaces
         Task<bool> DeleteAsync(int id);
         Task<IEnumerable<TimesheetDto>> GetByFilterAsync(int? projectId, int? taskId, int? userId);
         Task<IEnumerable<TimesheetDto>> GetByTaskAndUserAsync(int taskId);
+        Task<IEnumerable<TimesheetResponse>> GetByUserIdAsync(int userId);
 
     }
 }

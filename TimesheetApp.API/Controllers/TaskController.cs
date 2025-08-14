@@ -63,4 +63,14 @@ public class TaskController : ControllerBase
     //    var tasks = await _taskService.GetTasksByProjectIdAsync(projectId);
     //    return Ok(tasks);
     //}
+    [HttpGet("by-project/{projectId}")]
+    public async Task<IActionResult> GetTasksByProjectId(int projectId)
+    {
+        var tasks = await _taskService.GetTasksByProjectIdAsync(projectId);
+
+        if (tasks == null || tasks.Count == 0)
+            return NotFound();
+
+        return Ok(tasks);
+    }
 }

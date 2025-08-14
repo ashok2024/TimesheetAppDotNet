@@ -7,7 +7,7 @@ namespace TimesheetApp.API.Controllers;
 
 [Route("api/dashboard")]
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class DashboardController : ControllerBase
 {
     private readonly IDashboardService _dashboardService;

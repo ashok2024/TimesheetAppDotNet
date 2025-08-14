@@ -43,7 +43,7 @@ public class AuthService : IAuthService
     public async Task<User?> GetUserByUsernameAsync(string username)
     {
         using var conn = _dbFactory.CreateConnection();
-        var sql = "SELECT * FROM Users WHERE Username = @Username";
+        var sql = "SELECT * FROM Users WHERE Username = @Username and IsActive = 1";
         return await conn.QueryFirstOrDefaultAsync<User>(sql, new { Username = username });
     }
 }

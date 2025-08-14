@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 using TimesheetApp.Application.DTOs.TimesheetApp.Application.DTOs.TimesheetTask;
 using TimesheetApp.Application.Interfaces;
 
@@ -75,5 +76,51 @@ public class TimesheetController : ControllerBase
             return StatusCode(500, $"An error occurred: {ex.Message}");
         }
     }
+    [HttpGet("by-user")]
+    public async Task<IActionResult> GetByUser([FromQuery] int userId)
+    {
+        try
+        {
+            var result = await _timesheetService.GetByUserIdAsync(userId);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            // Optionally log the error
+            return StatusCode(500, $"An error occurred: {ex.Message}");
+        }
+    }
+    [HttpGet("export-csv-by-user")]
+    public async Task<IActionResult> ExportCsvByUser([FromQuery] int userId)
+    {
+        try
+        {
+            var logs = await _timesheetService.GetByUserIdAsync(userId);
+
+            if (logs == null || !logs.Any())
+                return NotFound("No time logs found for the given user.");
+
+            // Convert to CSV
+            var csvBuilder = new StringBuilder();
+            csvBuilder.AppendLine("TaskName,ProjectName,HoursSpent,Date,Description");
+
+            foreach (var log in logs)
+            {
+                csvBuilder.AppendLine(
+                    $"{log.TaskName},{log.ProjectName},{log.Hours},{log.LogDate:yyyy-MM-dd},{log.Description}"
+                );
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+            var fileName = $"TimeLogs_User_{userId}_{DateTime.Now:yyyyMMddHHmmss}.csv";
+
+            return File(bytes, "text/csv", fileName);
+        }
+        catch (Exception ex)
+        {
+            // Optionally log the error
+            return StatusCode(500, $"An error occurred: {ex.Message}");
+        }
+    }
+
 }
-    
